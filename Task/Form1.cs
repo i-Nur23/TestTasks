@@ -1,25 +1,26 @@
-using System.Runtime.CompilerServices;
+using System.Drawing.Drawing2D;
+using Task.TreeElements;
+using Task.TreeElements.Interfaces;
 
 namespace Task
 {
     public partial class Form1 : Form
     {
         private int width = 600;
-        private string[] pathsToImages = new string[]
-        {
-            "cake.jpg",
-            "car1.jpeg",
-            "cat.jpg",
-            "city.jpg",
-            "dog.jpg",
-            "mountain.jpeg",
-            "nature.jpg"
-        };
+        private string basicPath = "../../../Images";
+        private ComposableNode
+            r1 = new Row(),
+            c1 = new Column(),
+            r2 = new Row(),
+            c2 = new Column(),
+            r3 = new Row();
 
-        private ImagesHandler imgHandler = new ImagesHandler();
-        private List<Image> images = new List<Image>();
-        private float firstCoefficient;
+        private float maxWidth;
+        private float maxHeight;
 
+        /// <summary>
+        /// Конструктор формы
+        /// </summary>
         public Form1()
         {
             this.WindowState = FormWindowState.Maximized;
@@ -29,48 +30,69 @@ namespace Task
             CreateStoryboard();
         }
 
+        /// <summary>
+        /// Создание галереи изображений
+        /// </summary>
         private void CreateStoryboard()
         {
-            images = imgHandler.ExtractImages("../../../Images", pathsToImages);
+            ImageInfo.SetBasicFolder(basicPath);
 
-            if (images.Count == 0)
-            {
-                return;
-            }
+            r1.AddRange(new ImageInfo("cake.jpg"), c1, new ImageInfo("car1.jpeg"));
+            c1.AddRange(r2, new ImageInfo("cat.jpg"));
+            r2.AddRange(new ImageInfo("city.jpg"), c2);
+            c2.AddRange(r3, new ImageInfo("dog.jpg"));
+            r3.AddRange(new ImageInfo("mountain.jpeg"), new ImageInfo("nature.jpg"));
 
-            var divider = images[0].Width;
-
-            for (int i = 1; i < images.Count; i++)
-            {
-                divider += images[i].Width * images[0].Height / images[i].Height;
-            }
-
-            firstCoefficient = (float)width / divider;
-            var height = (int)Math.Ceiling(firstCoefficient * images[0].Height);
-
-            SaveImage(images, height);
-
+            DrawStoryboard(r1);
         }
 
-        private void SaveImage(List<Image> images, int height)
+        /// <summary>
+        /// Создание галереи изображений
+        /// </summary>
+        /// <param name="root">Корень дерева</param>
+        private void DrawStoryboard(ITreeNode root)
         {
-            using (Bitmap bmp = new Bitmap(width, height))
+            SetMaximumValues(root);
+            ExtremeParameterValues.InitializeMaxValues(maxWidth, maxHeight);
+
+            root.Normalize();
+            var percent = width / root.Width;
+            var height = root.Height * percent;
+            using (Bitmap bmp = new Bitmap((int)width, (int)height))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    float currentXCoord = 0f;
-
-                    foreach (var image in images)
-                    {
-                        g.DrawImage(image, currentXCoord, 0, image.Width * firstCoefficient * images[0].Height / image.Height, height);
-                        currentXCoord += image.Width * firstCoefficient * images[0].Height / image.Height;
-                    }
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.DrawImage(root.Image, 0, 0, width, height);
                 }
 
                 bmp.Save("../../../result.jpg");
             }
         }
 
+        /// <summary>
+        /// Поиск максимальных высоты и ширины изображений
+        /// </summary>
+        /// <param name="node">Текущий узел дерева</param>
+        private void SetMaximumValues(ITreeNode node)
+        {
+            if (node.Children != null)
+            {
+                foreach (var child in node.Children)
+                {
+                    SetMaximumValues(child);
+                }
+
+                return;
+            }
+
+            if (node.Height > maxHeight) maxHeight = node.Height;
+            if (node.Width > maxWidth) maxWidth = node.Width;
+        }
+
+        /// <summary>
+        /// Загрузка изображения в PictureBox на форме
+        /// </summary>
         private void Form1_Load(object sender, EventArgs e)
         {
             var img = Image.FromFile("../../../result.jpg");
@@ -78,5 +100,7 @@ namespace Task
             pictureBox.Height = img.Height;
             pictureBox.Image = img;
         }
+
+
     }
 }
