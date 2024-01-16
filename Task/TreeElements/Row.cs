@@ -23,13 +23,13 @@
 
             using (Graphics g = Graphics.FromImage(Image))
             {
-                var currentX = 0f;
+                var currentX = 0;
 
                 for (int i = 0; i < Children.Count; i++)
                 {
                     var child = Children[i];
                     g.DrawImage(child.Image, currentX, 0, child.Width * firstCoefficient * Children[0].Height / child.Height, height);
-                    currentX += child.Width * firstCoefficient * Children[0].Height / child.Height;
+                    currentX += (int)(child.Width * firstCoefficient * Children[0].Height / child.Height);
                 }
             }
 
