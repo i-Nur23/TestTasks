@@ -58,12 +58,12 @@ namespace Task
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    float currentXCoord = 0f;
+                    float currentXCoord = 0;
 
                     foreach (var image in images)
                     {
                         g.DrawImage(image, currentXCoord, 0, image.Width * firstCoefficient * images[0].Height / image.Height, height);
-                        currentXCoord += image.Width * firstCoefficient * images[0].Height / image.Height;
+                        currentXCoord += (int)(image.Width * firstCoefficient * images[0].Height / image.Height);
                     }
                 }
 
